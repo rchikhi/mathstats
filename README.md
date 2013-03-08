@@ -1,0 +1,1 @@
+Package mathstats contains mathematical and statistical functions, distributions, tests etc that is not included (at the moment) in scipy or numpy.
