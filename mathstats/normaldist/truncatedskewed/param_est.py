@@ -21,13 +21,15 @@ from math import exp, pi
 from mathstats.normaldist import normal
 
 
-def GapEstimator(mean, sigma, read_length, mean_obs, c1_len, c2_len):
+def GapEstimator(mean, sigma, read_length, mean_obs, c1_len, c2_len=None):
     '''
     Calculates the lower bound (given in http://www.ncbi.nlm.nih.gov/pubmed/22923455). The upper bound is then 
     uniquely determined by the lower bound. 
     '''
     naive_gap = mean - mean_obs
-    d_ML = CalcMLvaluesOfdGeneral(mean, sigma, read_length, c1_len, c2_len, naive_gap)
+
+    d_ML = CalcMLvaluesOfdGeneral(mean, sigma, read_length, c1_len, naive_gap, c2_len)
+
     return d_ML
 
 def PreCalcMLvaluesOfdLongContigs(mean, stdDev, readLen):
@@ -66,7 +68,6 @@ def PreCalcMLvaluesOfdLongContigs(mean, stdDev, readLen):
                 dValuesTable[prev_obs + i + 1] = d
 
         prev_obs = obs
-    print Aofd
     return dValuesTable
 
 def funcDGeneral(d, mean, stdDev, c1Len, c2Len, readLen):
@@ -101,13 +102,52 @@ def funcDGeneral(d, mean, stdDev, c1Len, c2Len, readLen):
     func_of_d = d + Aofd * stdDev ** 2
     return func_of_d, Aofd
 
-def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, c2Len, obs):
+def ML_one_reference(d, mean, stdDev, reflen, readLen):
+    def Nominator(d, reflen, readLen):
+        term1 = exp(-((reflen + d + 1 - mean) ** 2) / (float(2 * stdDev ** 2))) * (-mean * (d + 2 * readLen - 1) + (reflen + d + 1) * (d + 2 * readLen + mean - 1) + stdDev ** 2 - (reflen + d + 1) ** 2)
+        term2 = exp(-((readLen + d + 1 - mean) ** 2) / (float(2 * stdDev ** 2))) * (-mean * (d + 2 * readLen - 1) + (readLen + d + 1) * (d + 2 * readLen + mean - 1) + stdDev ** 2 - (readLen + d + 1) ** 2)
+        #  (normal.erf((reflen + d + 1 - mean) / (2 ** 0.5 * float(stdDev))) #- normal.erf((d + 2 * readLen - 1 - mean) / (2 ** 0.5 * float(stdDev))))
+        #term1 = 0.5 * (normal.erf((reflen + d + 1 - mean) / (2 ** 0.5 * float(stdDev))) - normal.erf((d + 2 * readLen - 1 - mean) / (2 ** 0.5 * float(stdDev))))
+        g_prime_d = term1 - term2
+        #print term1, term2
+        return g_prime_d
+
+    def Denominator(d, reflen, readLen):
+        #term 1,2 and 3 denodes what part of the function we are integrating term1 for first (ascending), etc...
+
+        #term1 = (c_min - readLen + 1) / 2.0 * (normal.erf((c_max + d + readLen - mean) / ((2 ** 0.5) * stdDev)) - normal.erf((c_min + d + readLen - mean) / ((2 ** 0.5) * stdDev)))
+
+        #term2 = (c_min + c_max + d - mean + 1) / 2.0 * (normal.erf((c_min + c_max + d + 1 - mean) / (2 ** 0.5 * float(stdDev))) - normal.erf((c_max + readLen + d - mean) / (2 ** 0.5 * float(stdDev))))
+
+        term3 = ((d + 2 * readLen - mean - 1) / 2.0) * (normal.erf((d + 2 * readLen - 1 - mean) / (2 ** 0.5 * float(stdDev))) - normal.erf((reflen + d + 1 - mean) / ((2 ** 0.5) * stdDev)))
+
+        term4 = stdDev / ((2 * pi) ** 0.5) * (-exp(-((reflen + d + 1 - mean) ** 2) / (float(2 * stdDev ** 2))) + exp(-((d + 2 * readLen - 1 - mean) ** 2) / (float(2 * stdDev ** 2))))
+
+        #term5 = -stdDev / ((2 * pi) ** 0.5) * (exp(-((c_max + readLen + d - mean) ** 2) / (float(2 * stdDev ** 2))) + exp(-((c_min + readLen + d - mean) ** 2) / (float(2 * stdDev ** 2))))
+        g_d = term3 + term4
+        return g_d
+
+    denominator = Denominator(d, reflen, readLen)
+    nominator = Nominator(d, reflen, readLen)
+    Aofd = nominator / denominator
+    func_of_d = d - Aofd * stdDev ** 2
+    #print 'nom:', nominator, 'denom:', denominator
+    return func_of_d
+
+
+def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, obs, c2Len):
     #do binary search among values
-    d_upper = int(mean + 2 * stdDev - 2 * readLen)
-    d_lower = int(-4 * stdDev)
+    d_upper = int(mean + 4 * stdDev - 2 * readLen)
+    d_lower = int(-c1Len - c2Len)
+    #print obs
     while d_upper - d_lower > 1:
         d_ML = (d_upper + d_lower) / 2.0
-        func_of_d, Aofd = funcDGeneral(d_ML, mean, stdDev, c1Len, c2Len, readLen)
+        if c2Len:
+            func_of_d, Aofd = funcDGeneral(d_ML, mean, stdDev, c1Len, c2Len, readLen)
+        else:
+            func_of_d = ML_one_reference(d_ML, mean, stdDev, c1Len, readLen)
+            #print 'current gap:', d_ML
+            #print func_of_d
         if func_of_d > obs:
             d_upper = d_ML
         else:
