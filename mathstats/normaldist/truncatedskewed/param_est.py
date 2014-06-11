@@ -138,7 +138,7 @@ def ML_one_reference(d, mean, stdDev, reflen, readLen):
 def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, obs, c2Len):
     #do binary search among values
     d_upper = int(mean + 4 * stdDev - 2 * readLen)
-    d_lower = int(-c1Len - c2Len)
+    d_lower = int(-c1Len - c2Len) + int(max(mean - 4 * stdDev, 2 * readLen))
     #print obs
     while d_upper - d_lower > 1:
         d_ML = (d_upper + d_lower) / 2.0
