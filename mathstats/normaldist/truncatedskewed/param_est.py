@@ -136,11 +136,16 @@ def ML_one_reference(d, mean, stdDev, reflen, readLen):
 
 
 def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, obs, c2Len):
+    """
+        returns the ML-gap as float. The ML gap is searched
+        for with an accuracy of 0.1bp. This is NOT the accuracy of the ML-estimate 
+        however since it depends on the number of samples etc. 
+    """
     #do binary search among values
     d_upper = int(mean + 4 * stdDev - 2 * readLen)
     d_lower = int(-c1Len - c2Len) + int(max(mean - 4 * stdDev, 2 * readLen))
     #print obs
-    while d_upper - d_lower > 1:
+    while d_upper - d_lower > 0.1:
         d_ML = (d_upper + d_lower) / 2.0
         if c2Len:
             func_of_d, Aofd = funcDGeneral(d_ML, mean, stdDev, c1Len, c2Len, readLen)
@@ -154,7 +159,7 @@ def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, obs, c2Len):
             d_lower = d_ML
 
     d_ML = (d_upper + d_lower) / 2.0
-    return int(round(d_ML, 0))
+    return d_ML
 
 
 
