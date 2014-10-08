@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='mathstats',
-    version='0.1.3',
+    version='0.1.3.1',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
@@ -23,7 +23,7 @@ setup(
     url='https://github.com/ksahlin/mathstats',
     license='GPLv3',
     long_description=open(os.path.join(os.getcwdu(), 'README.md')).read(),
-    #install_requires=['pysam==0.6',
+    install_requires=['scipy>=0.9']
     #                  'networkx>=1.4'],
     #platforms=['Unix', 'Linux', 'Mac OS']
 )

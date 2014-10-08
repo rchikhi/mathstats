@@ -24,6 +24,7 @@
 import math
 #from math import exp, sqrt, pi, log
 from decimal import Decimal, getcontext
+from scipy.stats import norm
 
 def erf(x):
     ## error function approximation with an error less than 1.5 * 10-7 for all x
@@ -64,12 +65,15 @@ def normcdf(x, mu, sigma):
         y = 1.0;
     return y
 
-def normpdf(x, mu, sigma):
+def normpdf(x, mu, sigma, prec=False):
+    if prec:
     #Get much better approximations with Decimal (simply more decimals)
-    getcontext().prec = 100
-    u = Decimal(str(x - mu)) / Decimal(str(abs(sigma)))
-    y = float(str((1 / Decimal(str((math.sqrt(2 * math.pi) * abs(sigma))))) * Decimal(str(-u * u / 2)).exp()))
-    return y
+        getcontext().prec = 100
+        u = Decimal(str(x - mu)) / Decimal(str(abs(sigma)))
+        y = float(str((1 / Decimal(str((math.sqrt(2 * math.pi) * abs(sigma))))) * Decimal(str(-u * u / 2)).exp()))
+        return y
+    else:
+        return norm.pdf(x, mu, sigma)
 
 def MaxObsDistr(nr_of_obs, prob):
     # Here, we choose the quantile that separates "normal" contigs from repeats. We want to find 
