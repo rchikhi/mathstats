@@ -65,12 +65,16 @@ def normcdf(x, mu, sigma):
         y = 1.0;
     return y
 
-def normpdf(x, mu, sigma, prec=False):
+def normpdf(x, mu, sigma, prec=False, approx=True):
     if prec:
     #Get much better approximations with Decimal (simply more decimals)
         getcontext().prec = 100
         u = Decimal(str(x - mu)) / Decimal(str(abs(sigma)))
         y = float(str((1 / Decimal(str((math.sqrt(2 * math.pi) * abs(sigma))))) * Decimal(str(-u * u / 2)).exp()))
+        return y
+    elif approx:
+        u = (x - mu) / abs(sigma)
+        y = (1 / (math.sqrt(2 * math.pi) * abs(sigma))) * math.exp(-u * u / 2)
         return y
     else:
         return norm.pdf(x, mu, sigma)
