@@ -65,7 +65,7 @@ def normcdf(x, mu, sigma):
         y = 1.0;
     return y
 
-def normpdf(x, mu, sigma, prec=False, approx=False):
+def normpdf(x, mu, sigma, prec=False, approx=True):
     if prec:
     #Get much better approximations with Decimal (simply more decimals)
         getcontext().prec = 100
