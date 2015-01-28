@@ -207,140 +207,61 @@ def tr_sk_std_dev(mean, stdDev, readLen, c1Len, c2Len, d):
     Calculates the standard deviation of the truncated normal distribution (given in http://www.ncbi.nlm.nih.gov/pubmed/22923455)
      with lower bound d, upper bound (d+c1Len+c2Len).
     '''
-    def E_O_square(d, mean, stdDev, c1Len, c2Len, readLen):
+    return stddev_given_d(mean, stdDev, readLen, c1Len, c2Len, d)
 
-        def CalcG_prime_d(d, c_min, c_max, c1Len, c2Len, readLen):
+    # def E_O_square(d, mean, stdDev, c1Len, c2Len, readLen):
 
-            term1 = -0.5 * (normal.erf((c_min + c_max + d + 1 - mean) / (2 ** 0.5 * float(stdDev))) + normal.erf((d + 2 * readLen - 1 - mean) / (2 ** 0.5 * float(stdDev))))
-            term2 = +0.5 * (normal.erf((d + c_max + readLen - mean) / (2 ** 0.5 * float(stdDev))) + normal.erf((d + c_min + readLen - mean) / (2 ** 0.5 * float(stdDev))))
-            g_prime_d = term1 + term2
-            return g_prime_d
+    #     def CalcG_prime_d(d, c_min, c_max, c1Len, c2Len, readLen):
 
-        def CalcGd(d, c1Len, c2Len, readLen):
-            #term 1,2 and 3 denodes what part of the function we are integrating term1 for first (ascending), etc...
-            term1 = (c_min - readLen + 1) / 2.0 * (normal.erf((c_max + d + readLen - mean) / ((2 ** 0.5) * stdDev)) - normal.erf((c_min + d + readLen - mean) / ((2 ** 0.5) * stdDev)))
+    #         term1 = -0.5 * (normal.erf((c_min + c_max + d + 1 - mean) / (2 ** 0.5 * float(stdDev))) + normal.erf((d + 2 * readLen - 1 - mean) / (2 ** 0.5 * float(stdDev))))
+    #         term2 = +0.5 * (normal.erf((d + c_max + readLen - mean) / (2 ** 0.5 * float(stdDev))) + normal.erf((d + c_min + readLen - mean) / (2 ** 0.5 * float(stdDev))))
+    #         g_prime_d = term1 + term2
+    #         return g_prime_d
 
-            term2 = (c_min + c_max + d - mean + 1) / 2.0 * (normal.erf((c_min + c_max + d + 1 - mean) / (2 ** 0.5 * float(stdDev))) - normal.erf((c_max + readLen + d - mean) / (2 ** 0.5 * float(stdDev))))
+    #     def CalcGd(d, c1Len, c2Len, readLen):
+    #         #term 1,2 and 3 denodes what part of the function we are integrating term1 for first (ascending), etc...
+    #         term1 = (c_min - readLen + 1) / 2.0 * (normal.erf((c_max + d + readLen - mean) / ((2 ** 0.5) * stdDev)) - normal.erf((c_min + d + readLen - mean) / ((2 ** 0.5) * stdDev)))
 
-            term3 = (d + 2 * readLen - mean - 1) / 2.0 * (normal.erf((d + 2 * readLen - 1 - mean) / (2 ** 0.5 * float(stdDev))) - normal.erf((c_min + d + readLen - mean) / ((2 ** 0.5) * stdDev)))
+    #         term2 = (c_min + c_max + d - mean + 1) / 2.0 * (normal.erf((c_min + c_max + d + 1 - mean) / (2 ** 0.5 * float(stdDev))) - normal.erf((c_max + readLen + d - mean) / (2 ** 0.5 * float(stdDev))))
 
-            term4 = stdDev / ((2 * pi) ** 0.5) * ( exp( (-((c_min + c_max + d + 1 - mean) ** 2) / (float(2 * stdDev ** 2))))   + exp( (-((d + 2 * readLen - 1 - mean) ** 2) / (float(2 * stdDev ** 2)))))
+    #         term3 = (d + 2 * readLen - mean - 1) / 2.0 * (normal.erf((d + 2 * readLen - 1 - mean) / (2 ** 0.5 * float(stdDev))) - normal.erf((c_min + d + readLen - mean) / ((2 ** 0.5) * stdDev)))
 
-            term5 = -stdDev / ((2 * pi) ** 0.5) * ( exp( (-((c_max + readLen + d - mean) ** 2) / (float(2 * stdDev ** 2)))) + exp( (-((c_min + readLen + d - mean) ** 2) / (float(2 * stdDev ** 2)))))
-            g_d = term1 + term2 + term3 + term4 + term5
-            return g_d
+    #         term4 = stdDev / ((2 * pi) ** 0.5) * ( exp( (-((c_min + c_max + d + 1 - mean) ** 2) / (float(2 * stdDev ** 2))))   + exp( (-((d + 2 * readLen - 1 - mean) ** 2) / (float(2 * stdDev ** 2)))))
 
-        def CalcB(d, c_min, c_max, c1Len, c2Len, readLen, g_d, g_prime_d):
-            c1 = 0
-            c2 = normal.normpdf(d + 2 * readLen - 1, mean, stdDev) - normal.normpdf(c_min + d + readLen , mean, stdDev) - normal.normpdf(c_max + d + readLen , mean, stdDev) + normal.normpdf(c_min + c_max + d + 1 , mean, stdDev)
+    #         term5 = -stdDev / ((2 * pi) ** 0.5) * ( exp( (-((c_max + readLen + d - mean) ** 2) / (float(2 * stdDev ** 2)))) + exp( (-((c_min + readLen + d - mean) ** 2) / (float(2 * stdDev ** 2)))))
+    #         g_d = term1 + term2 + term3 + term4 + term5
+    #         return g_d
 
-            b = stdDev ** 4 * (c1 + c2) + (mean ** 2 + stdDev ** 2) * g_d + 2 * stdDev ** 2 * mean * g_prime_d
-            return b, c1, c2
+    #     def CalcB(d, c_min, c_max, c1Len, c2Len, readLen, g_d, g_prime_d):
+    #         c1 = 0
+    #         c2 = normal.normpdf(d + 2 * readLen - 1, mean, stdDev) - normal.normpdf(c_min + d + readLen , mean, stdDev) - normal.normpdf(c_max + d + readLen , mean, stdDev) + normal.normpdf(c_min + c_max + d + 1 , mean, stdDev)
 
-        c_min = min(c1Len, c2Len)
-        c_max = max(c1Len, c2Len)
-        g_prime_d = CalcG_prime_d(d, c_min, c_max, c1Len, c2Len, readLen)
-        g_d = CalcGd(d, c1Len, c2Len, readLen)
-        #a = stdDev ** 2 * g_prime_d + mean * g_d
-        b, c1, c2 = CalcB(d, c_min, c_max, c1Len, c2Len, readLen, g_d, g_prime_d)
-        E_o_square = b / g_d - 2 * d * (stdDev ** 2 * (g_prime_d / g_d) + mean) + d ** 2
-        return E_o_square
+    #         b = stdDev ** 4 * (c1 + c2) + (mean ** 2 + stdDev ** 2) * g_d + 2 * stdDev ** 2 * mean * g_prime_d
+    #         return b, c1, c2
 
-
-
-    e_o = tr_sk_mean(d, mean, stdDev, c1Len, c2Len, readLen)
-    e_o_square = E_O_square(d, mean, stdDev, c1Len, c2Len, readLen)
-
-    if e_o_square - e_o ** 2 < 0:
-        sys.stderr.write('Error in estimate, Std_dev(O|d =' + str(d) + ')=' + str(e_o_square) + '  ' + str(e_o ** 2) + str(c1Len) + ' ' + str(c2Len))
-        std_dev = 0
-    else:
-        std_dev = (e_o_square - e_o ** 2) ** 0.5
-    return(std_dev)
-
-
-# def a(x,d, mu, sigma, c1Len, c2Len, r):
-#     """ 
-#     integral x max(0, min(x-d-2 r+1, a+b+d-x+1, c-r+1)) e^(-(x-mu)^2/(2 sigma^2)) dx = piecewise | (c-r+1) ((sqrt(pi/2) mu sigma erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma)))/sqrt(log(e))-(sigma^2 e^(-(x-mu)^2/(2 sigma^2)))/(log(e))) | a+b-c+d+r-x>=0&&c-r>-1&&c+d+r-x<=0
-# -(sigma e^(-(x-mu)^2/(2 sigma^2)) (sqrt(2 pi) e^((x-mu)^2/(2 sigma^2)) erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma)) (mu log(e) (-a-b-d+mu-1)+sigma^2)+2 sigma sqrt(log(e)) (a+b+d-mu-x+1)))/(2 log^(3/2)(e)) | a+b-c+d+r-x<0&&a+b+2 d+2 r-2 x<=0&&a+b+d-x>-1
-# (sigma e^(-(x-mu)^2/(2 sigma^2)) (sqrt(2 pi) e^((x-mu)^2/(2 sigma^2)) (mu log(e) (-d+mu-2 r+1)+sigma^2) erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma))-2 sigma sqrt(log(e)) (-d+mu-2 r+x+1)))/(2 log^(3/2)(e)) | d+2 r-x<1&&a+b+2 d+2 r-2 x>0&&c+d+r-x>0
-# integral x min(x-d-2 r+1, a+b+d-x+1, c-r+1) e^(-(x-mu)^2/(2 sigma^2)) dx = piecewise 
-
-#     """
-
-#     c_max = max(c1Len,c2Len)
-#     c_min = min(c1Len,c2Len)
-
-#     if c_min + d + r <= x <= c_max + d + r  and  r < c_min +1:
-#         print 'a2'
-#         a_term = (c_min-r+1) * \
-#         ( sqrt(pi/2.0)*mu*sigma * erf_norm(x,mu,sigma) - \
-#         sigma**2.0 *e_norm_neg(x,mu,sigma) )
-
-#     elif c_max + d + r < x < c_max +c_min + d + 1 and ( (c_max + c_min)/2.0 + d + r <= x):
-#         print 'a3'
-#         a_term = - (1/2.0) * sigma * e_norm_neg(x,mu,sigma) * \
-#         ( sqrt(2*pi)* e_norm_neg(x,mu,sigma) * erf_norm(x,mu,sigma) * (mu * (-c1Len - c2Len - d + mu - 1) + sigma**2) +\
-#         2*sigma* (c1Len + c2Len + d - mu - x + 1) )
-
-#     elif d+2*r-1 <= x < c_min + d + r  and x < (c_max + c_min)/2.0 + d + r :
-#         print 'a1'
-#         a_term = (1/2.0) * sigma * e_norm_neg(x,mu,sigma) * \
-#         ( sqrt(2*pi)* e_norm_pos(x,mu,sigma) * erf_norm(x,mu,sigma) *(mu * (-d+mu-2*r+1) + sigma**2) -\
-#         2*sigma* (-d+mu-2*r+x+1)    )
-#     else:
-#         a_term = 0
-
-    
-#     # scale result with the constant in the normal distribution
-#     a_term = (1.0/sqrt(2*pi*sigma**2)) *a_term
-#     return a_term
+    #     c_min = min(c1Len, c2Len)
+    #     c_max = max(c1Len, c2Len)
+    #     g_prime_d = CalcG_prime_d(d, c_min, c_max, c1Len, c2Len, readLen)
+    #     g_d = CalcGd(d, c1Len, c2Len, readLen)
+    #     #a = stdDev ** 2 * g_prime_d + mean * g_d
+    #     b, c1, c2 = CalcB(d, c_min, c_max, c1Len, c2Len, readLen, g_d, g_prime_d)
+    #     E_o_square = b / g_d - 2 * d * (stdDev ** 2 * (g_prime_d / g_d) + mean) + d ** 2
+    #     return E_o_square
 
 
 
-# def b(x, d, mu, sigma, c1Len, c2Len, r):
-#     """
-# integral (x^2 max(0, min(x-d-2 r+1, a+b+d-x+1, c-r+1)))/e^((x-mu)^2/(2 sigma^2)) dx = piecewise | (sigma (c-r+1) e^(-(mu^2+x^2)/(2 sigma^2)) (sqrt(2 pi) (mu^2 log(e)+sigma^2) e^((mu^2+x^2)/(2 sigma^2)) erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma))-2 sigma sqrt(log(e)) (mu+x) e^((mu x)/sigma^2)))/(2 log^(3/2)(e)) | a+b-c+d+r-x>=0&&c-r>-1&&c+d+r-x<=0
-# (sigma e^(-(mu^2+x^2)/(2 sigma^2)) (2 sigma e^((mu x)/sigma^2) (log(e) (mu (-a-b-d+mu-1)-x (a+b+d-mu+1)+x^2)+2 sigma^2)-sqrt(2 pi) sqrt(log(e)) e^((mu^2+x^2)/(2 sigma^2)) erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma)) (mu^2 log(e) (-a-b-d+mu-1)-sigma^2 (a+b+d-3 mu+1))))/(2 log^2(e)) | a+b-c+d+r-x<0&&a+b+2 d+2 r-2 x<=0&&a+b+d-x>-1
-# (sigma e^(-(mu^2+x^2)/(2 sigma^2)) (sqrt(2 pi) sqrt(log(e)) e^((mu^2+x^2)/(2 sigma^2)) (mu^2 log(e) (-d+mu-2 r+1)-sigma^2 (d-3 mu+2 r-1)) erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma))-2 sigma e^((mu x)/sigma^2) (log(e) (mu (-d+mu-2 r+1)+x (-d+mu-2 r+1)+x^2)+2 sigma^2)))/(2 log^2(e)) | d+2 r-x<1&&a+b+2 d+2 r-2 x>0&&c+d+r-x>0+constant
+    # e_o = tr_sk_mean(d, mean, stdDev, c1Len, c2Len, readLen)
+    # e_o_square = E_O_square(d, mean, stdDev, c1Len, c2Len, readLen)
 
-#     """
+    # if e_o_square - e_o ** 2 < 0:
+    #     sys.stderr.write('Error in estimate, Std_dev(O|d =' + str(d) + ')=' + str(e_o_square) + '  ' + str(e_o ** 2) + str(c1Len) + ' ' + str(c2Len))
+    #     std_dev = 0
+    # else:
+    #     std_dev = (e_o_square - e_o ** 2) ** 0.5
+    # return(std_dev)
 
-#     c_max = max(c1Len,c2Len)
-#     c_min = min(c1Len,c2Len)
-#     if c_min + d + r <= x < c_max + d + r  and  r < c_min +1:
-#         print 'b2'
-#         b_term = sigma*(c_min-r+1)* e_sq_norm_neg(x,mu,sigma) * \
-#         ( sqrt(2*pi)*(mu**2 + sigma**2)* e_sq_norm_pos(x,mu,sigma)* erf_norm(x,mu,sigma) -\
-#          2*sigma *(mu + x)* e_times_pos(x,mu,sigma))   
-         
-       
-#     elif c_max + d + r < x <= c_max +c_min + d + 1 and ( (c_max + c_min)/2.0 + d + r <= x):
-#         print 'b3'
-#         b_term = (1/2.0)*sigma* e_sq_norm_neg(x,mu,sigma) * \
-#         ( 2*sigma*e_times_pos(x,mu,sigma) * \
-#         ( (mu *(-c1Len- c2Len -d+mu-1)- x*(c1Len+ c2Len +d-mu+1) +x**2)+2*sigma**2) -\
-#         sqrt(2*pi)*e_sq_norm_pos(x,mu,sigma)*erf_norm(x,mu,sigma)* \
-#          (mu**2 *(-c1Len- c2Len -d+mu-1) - sigma**2 * (c1Len+ c2Len +d-3*mu+1))  )
 
-    
-#     elif d+2*r-1 <= x < c_min + d + r  and x < (c_max + c_min)/2.0 + d + r :
-#         print 'b1'
-#         b_term = (1/2.0)*sigma* e_sq_norm_neg(x,mu,sigma) * \
-#         ( sqrt(2*pi)*e_sq_norm_pos(x,mu,sigma) * \
-#         ( mu**2 * (-d+mu-2*r+1) - sigma**2 *(d-3*mu+ 2*r-1)) * erf_norm(x,mu,sigma) -  \
-#         2*sigma*e_times_pos(x,mu,sigma)* ( ( mu*(-d+mu-2*r+1)+ x*(-d+mu-2*r+1) + x**2)+ 2*sigma**2) )
-#         # *(1/2.0)*sigma *  exp(-(mu**2+x**2)/(2*sigma**2)) *\
-#         # (sqrt(2*pi)*exp((mu**2+x**2)/(2*sigma**2)) *  (mu**2 * (-d+mu-2*r+1) - sigma**2 *(d-3*mu+ \
-#         # 2*r-1))*normal.erf((x-mu)/(sqrt(2.0)*sigma))-2*sigma*exp((mu*x)/sigma**2)* \
-#         # ( ( mu*(-d+mu-2*r+1)+ x*(-d+mu-2*r+1)+x**2)+2*sigma**2))
 
-#     else:
-#         b_term = 0
-
-#     b_term = (1.0/sqrt(2*pi*sigma**2)) *b_term
-
-#     return b_term
 
 def erf_norm(x,mu,sigma):
     return normal.erf((x-mu)/(sqrt(2.0)*sigma))    
@@ -360,36 +281,6 @@ def e_sq_norm_neg(x,mu,sigma):
 def e_times_pos(x,mu,sigma):
     return exp((mu*x)/sigma**2)
 
-
-# def g_d(x, d, mu, sigma, c1Len, c2Len, r):
-#     """
-# g(d):
-# piecewise | (sqrt(pi/2) sigma (c-r+1) erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma)))/sqrt(log(e)) | r<c+1&&x>=c+d+r&&x<=a+b-c+d+r
-# (sigma e^(-(x-mu)^2/(2 sigma^2)) (sqrt(log(e)) (sqrt(2 pi) a+sqrt(2 pi) b+sqrt(2 pi) d-sqrt(2 pi) mu+sqrt(2 pi)) e^((x-mu)^2/(2 sigma^2)) erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma))+2 sigma))/(2 log(e)) | x<a+b+d+1&&x>=1/2 (a+b+2 d+2 r)&&x>a+b-c+d+r
-# -(sigma e^(-(x-mu)^2/(2 sigma^2)) (sqrt(log(e)) (sqrt(2 pi) d-sqrt(2 pi) mu+2 sqrt(2 pi) r-sqrt(2 pi)) e^((x-mu)^2/(2 sigma^2)) erf((sqrt(log(e)) (x-mu))/(sqrt(2) sigma))+2 sigma))/(2 log(e)) | x<1/2 (a+b+2 d+2 r)&&x<c+d+r&&x>d+2 r-1+constant
-#     """
-#     c_max = max(c1Len,c2Len)
-#     c_min = min(c1Len,c2Len)
-
-#     if  c_min + d + r <= x < c_max + d + r  and  r < c_min +1:
-#         print 'g_d2'
-#         g_d_term = sqrt(pi/2.0) *  sigma *(c_min-r+1)*erf_norm(x,mu,sigma)
-    
-#     elif  c_max + d + r < x <= c_max +c_min + d + 1 and ( (c_max + c_min)/2.0 + d + r <= x) : 
-#         print 'g_d3'
-#         g_d_term = 1/2.0 *sigma*e_norm_neg(x,mu,sigma) *\
-#         ( sqrt(pi*2.0) * (c1Len+c2Len+d-mu+1)* \
-#         e_norm_neg(x,mu,sigma)* erf_norm(x,mu,sigma) + 2*sigma)
-#     elif d+2*r-1 <= x < c_min + d + r  and x < (c_max + c_min)/2.0 + d + r :
-#         print 'g_d1'
-#         g_d_term = - sqrt(pi/2.0) *sigma* (d-mu+2*r-1) *erf_norm(x,mu,sigma) - \
-#         sigma**2 * e_norm_neg(x,mu,sigma) 
-#     else:
-#         g_d_term = 0
-
-#     # scale result with the constant in the normal distribution
-#     g_d_term = (1.0/sqrt(2*pi*sigma**2)) * g_d_term
-#     return g_d_term
 
 
  
@@ -442,7 +333,7 @@ def stddev_given_d(mean, stdDev, readLen, c1Len, c2Len, d):
     c_min = min(c1Len,c2Len)
     c_max = max(c1Len,c2Len)
 
-    assert c_min > readLen - 1
+    #assert c_min > readLen - 1
 
     # define integration points (x1, x2, x3, x4) 
     # the functions a, b and g_d each have three different 
@@ -455,67 +346,67 @@ def stddev_given_d(mean, stdDev, readLen, c1Len, c2Len, d):
 
     args = (mean,stdDev,readLen,d,c_min,c_max)
 
-    print b1(x2, *args)
-    print b1(x1, *args)
-    print b1(x2, *args) - b1(x1, *args)
+    # print b1(x2, *args)
+    # print b1(x1, *args)
+    # print b1(x2, *args) - b1(x1, *args)
 
-    print b2(x3, *args)
-    print b2(x2, *args)
-    print b2(x3, *args) - b2(x2, *args)
+    # print b2(x3, *args)
+    # print b2(x2, *args)
+    # print b2(x3, *args) - b2(x2, *args)
 
-    print b3(x4, *args)
-    print b3(x3, *args)
-    print b3(x4, *args) - b3(x3, *args)
+    # print b3(x4, *args)
+    # print b3(x3, *args)
+    # print b3(x4, *args) - b3(x3, *args)
 
     b_term = b1(x2, *args) - b1(x1, *args) \
             + b2(x3, *args) - b2(x2, *args) \
             + b3(x4, *args) - b3(x3, *args)
 
-    print 'b:', b_term
+    # print 'b:', b_term
 
-    print a1(x2, *args)
-    print a1(x1, *args)
-    print a1(x2, *args) - a1(x1, *args)
+    # print a1(x2, *args)
+    # print a1(x1, *args)
+    # print a1(x2, *args) - a1(x1, *args)
 
-    print a2(x3, *args)
-    print a2(x2, *args)
-    print a2(x3, *args) - a2(x2, *args)
+    # print a2(x3, *args)
+    # print a2(x2, *args)
+    # print a2(x3, *args) - a2(x2, *args)
 
-    print a3(x4, *args)
-    print a3(x3, *args)
-    print a3(x4, *args) - a3(x3, *args)
+    # print a3(x4, *args)
+    # print a3(x3, *args)
+    # print a3(x4, *args) - a3(x3, *args)
 
     a_term = a1(x2, *args) - a1(x1, *args) \
             + a2(x3, *args) - a2(x2, *args) \
             + a3(x4, *args) - a3(x3, *args)
-    print 'a:',a_term
+    # print 'a:',a_term
 
 
-    print g_d1(x2, *args)
-    print g_d1(x1, *args)
-    print g_d1(x2, *args) - g_d1(x1, *args)
+    # print g_d1(x2, *args)
+    # print g_d1(x1, *args)
+    # print g_d1(x2, *args) - g_d1(x1, *args)
 
-    print g_d2(x3, *args)
-    print g_d2(x2, *args)
-    print g_d2(x3, *args) - g_d2(x2, *args)
+    # print g_d2(x3, *args)
+    # print g_d2(x2, *args)
+    # print g_d2(x3, *args) - g_d2(x2, *args)
 
-    print g_d3(x4, *args)
-    print g_d3(x3, *args)
-    print g_d3(x4, *args) - g_d3(x3, *args)
+    # print g_d3(x4, *args)
+    # print g_d3(x3, *args)
+    # print g_d3(x4, *args) - g_d3(x3, *args)
 
     g_d_term = g_d1(x2, *args) - g_d1(x1, *args) \
             + g_d2(x3, *args) - g_d2(x2, *args) \
             + g_d3(x4, *args) - g_d3(x3, *args)
-    print 'g_d:',g_d_term
+    # print 'g_d:',g_d_term
 
 
 
     var = b_term / g_d_term\
     - ( a_term / g_d_term )**2
 
-    print var
+    print sqrt(var)
     if var < 0:
-        sys.stderr.write('Error in estimate, a={0}, b={1}'.format(a_area,b_area))
+        sys.stderr.write('Error in estimate, a={0}, b={1}'.format(a_term,b_term))
         std_dev_est = 0
     else:
         std_dev_est = sqrt(var)  
