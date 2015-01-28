@@ -346,7 +346,7 @@ def erf_norm(x,mu,sigma):
     return normal.erf((x-mu)/(sqrt(2.0)*sigma))    
 
 def e_norm_neg(x,mu,sigma):
-    return scipy.stats.norm.pdf(x,mu,sigma) # exp(-(x-mu)**2/(2*sigma**2))
+    return exp(-(x-mu)**2/(2*sigma**2))
 
 def e_norm_pos(x,mu,sigma):
     return exp((x-mu)**2/(2*sigma**2))
@@ -394,11 +394,42 @@ def e_times_pos(x,mu,sigma):
 
  
 def b1(x,mu,sigma,r,d,c_min,c_max):
-    return
+    return (1/2.0)*sigma* e_sq_norm_neg(x,mu,sigma) * \
+    ( sqrt(2*pi)*e_sq_norm_pos(x,mu,sigma)* ( (-mu**2 + -sigma**2)*(d +2*r -1) + mu**3 + 3*mu*sigma**2 )* erf_norm(x,mu,sigma) -\
+     2*sigma*e_times_pos(x,mu,sigma) *( -mu*(d + 2*r - 1) + x*(-d + mu -2*r +1) + mu**2 +2*sigma**2 + x**2 ) )  
+
 def b2(x,mu,sigma,r,d,c_min,c_max):
-    return
+    return (1/2.0)*sigma* e_sq_norm_neg(x,mu,sigma)*(c_min -r +1) * \
+    ( sqrt(2*pi)*  (mu**2 + sigma**2) * e_sq_norm_pos(x,mu,sigma) * erf_norm(x,mu,sigma) -\
+     2*sigma*(mu + x)*e_times_pos(x,mu,sigma) ) 
+
 def b3(x,mu,sigma,r,d,c_min,c_max):
-    return
+    return  (1/2.0)*sigma* e_sq_norm_neg(x,mu,sigma) * \
+    ( 2*sigma*e_times_pos(x,mu,sigma) *( -mu*(c_min + c_max + d +1) -x*( c_min + c_max + d -mu +1 ) + mu**2 + 2*sigma**2 + x**2 ) -\
+    sqrt(2*pi)*e_sq_norm_pos(x,mu,sigma)*erf_norm(x,mu,sigma)* ( -mu**2*(c_min + c_max + d +1) -sigma**2*( c_min + c_max + d +1 ) +mu**3 + 3*mu*sigma**2 ))
+
+
+def a1(x,mu,sigma,r,d,c_min,c_max):
+    return sqrt(pi/2.0)*sigma*( -mu*(d +2*r -1) + mu**2 + sigma**2 )* erf_norm(x,mu,sigma) -\
+    sigma**2 * e_norm_neg(x,mu,sigma) * (-d + mu  - 2*r + x +1)
+
+def a2(x,mu,sigma,r,d,c_min,c_max):
+    return (c_min -r +1)* ( sqrt(pi/2.0)*mu*sigma*erf_norm(x,mu,sigma) - sigma**2*e_norm_neg(x,mu,sigma) )
+
+def a3(x,mu,sigma,r,d,c_min,c_max):
+    return sigma**2* (-e_norm_neg(x,mu,sigma))*( c_min + c_max + d - mu -x + 1 ) -\
+    sqrt(pi/2.0)*sigma*erf_norm(x,mu,sigma)*( -mu*( c_min + c_max + d +1 ) + mu**2 + sigma**2 )
+
+def g_d1(x,mu,sigma,r,d,c_min,c_max):
+    return sigma**2* (-e_norm_neg(x,mu,sigma)) - sqrt(pi/2.0)*sigma*(d - mu + 2*r -1)* erf_norm(x,mu,sigma)
+
+def g_d2(x,mu,sigma,r,d,c_min,c_max):
+    return sqrt(pi/2.0)*sigma*erf_norm(x,mu,sigma)*(c_min - r + 1)
+
+def g_d3(x,mu,sigma,r,d,c_min,c_max):
+    return sqrt(pi/2.0)*sigma * (c_min +c_max + d - mu +1 )* erf_norm(x,mu,sigma) +\
+    sigma**2*e_norm_neg(x,mu,sigma)
+
 
 
 
@@ -422,36 +453,65 @@ def stddev_given_d(mean, stdDev, readLen, c1Len, c2Len, d):
     x3 = c_max + d +readLen if c_max + d + readLen < mean + 5*stdDev else mean + 5*stdDev
     x4 =  c_max +c_min + d + 1 if c_min + c_max + d + 1 < mean + 5*stdDev else mean + 5*stdDev
 
-    b_term = b1(x2) - b1(x_1) + b2(x3) - b2(x2) + b3(x4) - b3(x3)
-   
-    # # if c1Len + c2Len + d + 1 > mean + 5*stdDev:
-    # #     upper_integration_point = mean + 5*stdDev
-    # # else:
-    # #     upper_integration_point = c1Len + c2Len + d + 1 
+    args = (mean,stdDev,readLen,d,c_min,c_max)
 
-    # # lower_integration_point =  d + 2 * readLen - 1
-    
-    # b_upper = b(upper_integration_point, d, mean, stdDev, c1Len, c2Len, readLen) 
-    # b_lower = b(lower_integration_point, d, mean, stdDev, c1Len, c2Len, readLen)
-    # a_upper = a(upper_integration_point, d, mean, stdDev, c1Len, c2Len, readLen)
-    # a_lower =  a(lower_integration_point, d, mean, stdDev, c1Len, c2Len, readLen)
-    # g_d_upper = g_d(upper_integration_point,d, mean, stdDev, c1Len, c2Len, readLen)
-    # g_d_lower = g_d(lower_integration_point,d, mean, stdDev, c1Len, c2Len, readLen)
+    print b1(x2, *args)
+    print b1(x1, *args)
+    print b1(x2, *args) - b1(x1, *args)
 
-    # g_d_area = g_d_upper - g_d_lower
-    # b_area = b_upper - b_lower
-    # a_area = a_upper - a_lower
+    print b2(x3, *args)
+    print b2(x2, *args)
+    print b2(x3, *args) - b2(x2, *args)
 
-    # print g_d_lower,g_d_upper
-    # print a_lower,a_upper
-    # print b_lower,b_upper
-    
-    # print a_area,  ( a_area / g_d_area )**2  
-    # print b_area,  b_area/ g_d_area
-    # print g_d_area
+    print b3(x4, *args)
+    print b3(x3, *args)
+    print b3(x4, *args) - b3(x3, *args)
 
-    var = b_area / g_d_area\
-    - ( a_area / g_d_area )**2
+    b_term = b1(x2, *args) - b1(x1, *args) \
+            + b2(x3, *args) - b2(x2, *args) \
+            + b3(x4, *args) - b3(x3, *args)
+
+    print 'b:', b_term
+
+    print a1(x2, *args)
+    print a1(x1, *args)
+    print a1(x2, *args) - a1(x1, *args)
+
+    print a2(x3, *args)
+    print a2(x2, *args)
+    print a2(x3, *args) - a2(x2, *args)
+
+    print a3(x4, *args)
+    print a3(x3, *args)
+    print a3(x4, *args) - a3(x3, *args)
+
+    a_term = a1(x2, *args) - a1(x1, *args) \
+            + a2(x3, *args) - a2(x2, *args) \
+            + a3(x4, *args) - a3(x3, *args)
+    print 'a:',a_term
+
+
+    print g_d1(x2, *args)
+    print g_d1(x1, *args)
+    print g_d1(x2, *args) - g_d1(x1, *args)
+
+    print g_d2(x3, *args)
+    print g_d2(x2, *args)
+    print g_d2(x3, *args) - g_d2(x2, *args)
+
+    print g_d3(x4, *args)
+    print g_d3(x3, *args)
+    print g_d3(x4, *args) - g_d3(x3, *args)
+
+    g_d_term = g_d1(x2, *args) - g_d1(x1, *args) \
+            + g_d2(x3, *args) - g_d2(x2, *args) \
+            + g_d3(x4, *args) - g_d3(x3, *args)
+    print 'g_d:',g_d_term
+
+
+
+    var = b_term / g_d_term\
+    - ( a_term / g_d_term )**2
 
     print var
     if var < 0:
