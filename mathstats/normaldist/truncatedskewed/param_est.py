@@ -17,8 +17,8 @@
     '''
 
 import sys
-from math import exp, pi, sqrt,log
-import scipy.stats 
+import math
+from math import exp, pi, sqrt
 from mathstats.normaldist import normal
 
 
@@ -273,14 +273,29 @@ def e_norm_pos(x,mu,sigma):
     return exp((x-mu)**2/(2*sigma**2))
 
 def e_sq_norm_pos(x,mu,sigma):
-    return exp((mu**2+x**2)/(2*sigma**2))
+    try:
+        return exp((mu**2+x**2)/(2*sigma**2))
+    except OverflowError:
+        import decimal
+        decimal.getcontext().prec = 60
+        return float(decimal.Decimal((mu**2+x**2)/(2*sigma**2)).exp())
 
 def e_sq_norm_neg(x,mu,sigma):
-    return exp(-(mu**2+x**2)/(2*sigma**2))
+    try:
+        return exp(-(mu**2+x**2)/(2*sigma**2))
+    except OverflowError:
+        import decimal
+        decimal.getcontext().prec = 60
+        return float(decimal.Decimal(-(mu**2+x**2)/(2*sigma**2)).exp())
 
 def e_times_pos(x,mu,sigma):
-    return exp((mu*x)/sigma**2)
-
+    try:
+        return exp((mu*x)/sigma**2)
+    except OverflowError:
+        import decimal
+        decimal.getcontext().prec = 60
+        # print float(float(decimal.Decimal((mu*x)/sigma**2).exp())
+        return float(decimal.Decimal((mu*x)/sigma**2).exp())   
 
 
  
@@ -404,9 +419,12 @@ def stddev_given_d(mean, stdDev, readLen, c1Len, c2Len, d):
     var = b_term / g_d_term\
     - ( a_term / g_d_term )**2
 
-    print sqrt(var)
+    #print sqrt(var)
     if var < 0:
-        sys.stderr.write('Error in estimate, a={0}, b={1}'.format(a_term,b_term))
+        sys.stderr.write('Error in estimate, a={0}, b={1}\n'.format(a_term,b_term))
+        std_dev_est = 0
+    elif math.isnan(var):
+        sys.stderr.write('MathOverflow - too small stddev of library ({0}bp) compared to the mean ({1}bp) - check distribution. \n'.format(stdDev,mean))
         std_dev_est = 0
     else:
         std_dev_est = sqrt(var)  
