@@ -33,6 +33,17 @@ def GapEstimator(mean, sigma, read_length, mean_obs, c1_len, c2_len=None):
 
     return d_ML
 
+def GapEstimator_reinforced(mean, sigma, read_length, mean_obs, stddev_obs, c1_len, c2_len=None):
+    '''
+    Calculates the lower bound (given in http://www.ncbi.nlm.nih.gov/pubmed/22923455). The upper bound is then 
+    uniquely determined by the lower bound. 
+    '''
+    naive_gap = mean - mean_obs
+    d_ML = CalcMLvaluesOfdGeneral(mean, sigma, read_length, c1_len, naive_gap, c2_len)
+    stddev_est = stddev_given_d(mean, sigma, read_length, c1_len, c2_len, d_ML)
+
+    return d_ML,stddev_est
+
 def PreCalcMLvaluesOfdLongContigs(mean, stdDev, readLen):
     def Nom(z, mean, stdDev):
         nom = -(1 + normal.erf((mean - d - 2 * readLen + 1) / (2 ** 0.5 * float(stdDev)))) * (pi / 2) ** 0.5
@@ -341,7 +352,8 @@ def g_d3(x,mu,sigma,r,d,c_min,c_max):
 
 def stddev_given_d(mean, stdDev, readLen, c1Len, c2Len, d):
     """
-        b/g_d - (a/g_d)^2
+        b/g_d - (a/g_d)^2 according to
+        http://www.biomedcentral.com/content/supplementary/1471-2105-15-281-s1.pdf
     """
     stdDev = float(stdDev)
     mean = float(mean)
@@ -431,3 +443,36 @@ def stddev_given_d(mean, stdDev, readLen, c1Len, c2Len, d):
     return std_dev_est
 
 
+def mean_given_d(mean, stdDev, readLen, c1Len, c2Len, d):
+    """
+        a/g_d - d according to
+        http://www.biomedcentral.com/content/supplementary/1471-2105-15-281-s1.pdf
+    """
+
+    stdDev = float(stdDev)
+    mean = float(mean)
+    c_min = min(c1Len,c2Len)
+    c_max = max(c1Len,c2Len)
+
+    #assert c_min > readLen - 1
+
+    # define integration points (x1, x2, x3, x4) 
+    # the functions a, b and g_d each have three different 
+    # intervals they need to be integrated in (because of the max(min(.,.,.)) function)
+    # intervals: [x1,x2], [x2,x3], [x3,x4]. 
+    x1 = d + 2 * readLen - 1
+    x2 = c_min + d +readLen if c_min + d + readLen < mean + 5*stdDev else mean + 5*stdDev
+    x3 = c_max + d +readLen if c_max + d + readLen < mean + 5*stdDev else mean + 5*stdDev
+    x4 =  c_max +c_min + d + 1 if c_min + c_max + d + 1 < mean + 5*stdDev else mean + 5*stdDev
+
+    args = (mean,stdDev,readLen,d,c_min,c_max)
+
+    a_term = a1(x2, *args) - a1(x1, *args) \
+            + a2(x3, *args) - a2(x2, *args) \
+            + a3(x4, *args) - a3(x3, *args)
+
+    g_d_term = g_d1(x2, *args) - g_d1(x1, *args) \
+            + g_d2(x3, *args) - g_d2(x2, *args) \
+            + g_d3(x4, *args) - g_d3(x3, *args)
+        
+    return a_term / g_d_term -d   
