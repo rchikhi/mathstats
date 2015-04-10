@@ -110,7 +110,11 @@ def funcDGeneral(d, mean, stdDev, c1Len, c2Len, readLen):
 
     denominator = Denominator(d, c1Len, c2Len, readLen)
     nominator = Nominator(d, c_min, c_max, c1Len, c2Len, readLen)
-    Aofd = nominator / denominator
+    try:
+        Aofd = nominator / denominator
+    except ZeroDivisionError:
+        Aofd = 0.0000000001
+
     func_of_d = d + Aofd * stdDev ** 2
     return func_of_d, Aofd
 
@@ -154,8 +158,8 @@ def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, obs, c2Len):
         however since it depends on the number of samples etc. 
     """
     #do binary search among values
-    d_upper = int(mean + 4 * stdDev - 2 * readLen)
-    d_lower = int(-c1Len - c2Len) + int(max(mean - 4 * stdDev, 2 * readLen))
+    d_upper = int(mean + 2 * stdDev - 2 * readLen)
+    d_lower = int(-c1Len - c2Len) + int(max(mean - 2 * stdDev, 2 * readLen))
     #print obs
     while d_upper - d_lower > 0.1:
         d_ML = (d_upper + d_lower) / 2.0
