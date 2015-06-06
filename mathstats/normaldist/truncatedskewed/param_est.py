@@ -28,6 +28,8 @@ def GapEstimator(mean, sigma, read_length, mean_obs, c1_len, c2_len=None):
     uniquely determined by the lower bound. 
     '''
     naive_gap = mean - mean_obs
+    if c2_len is None:
+        c2_len = c1_len
 
     d_ML = CalcMLvaluesOfdGeneral(mean, sigma, read_length, c1_len, naive_gap, c2_len)
 
@@ -38,6 +40,9 @@ def GapEstimator_reinforced(mean, sigma, read_length, mean_obs, stddev_obs, c1_l
     Calculates the lower bound (given in http://www.ncbi.nlm.nih.gov/pubmed/22923455). The upper bound is then 
     uniquely determined by the lower bound. 
     '''
+    if c2_len is None:
+        c2_len = c1_len
+        
     naive_gap = mean - mean_obs
     d_ML = CalcMLvaluesOfdGeneral(mean, sigma, read_length, c1_len, naive_gap, c2_len)
     stddev_est = stddev_given_d(mean, sigma, read_length, c1_len, c2_len, d_ML)
@@ -151,7 +156,7 @@ def ML_one_reference(d, mean, stdDev, reflen, readLen):
     return func_of_d
 
 
-def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, obs, c2Len):
+def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, naive_gap, c2Len):
     """
         returns the ML-gap as float. The ML gap is searched
         for with an accuracy of 0.1bp. This is NOT the accuracy of the ML-estimate 
@@ -160,7 +165,7 @@ def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, obs, c2Len):
     #do binary search among values
     d_upper = int(mean + 2 * stdDev - 2 * readLen)
     d_lower = int(-c1Len - c2Len) + int(max(mean - 2 * stdDev, 2 * readLen))
-    #print obs
+    #print naive_gap
     while d_upper - d_lower > 0.1:
         d_ML = (d_upper + d_lower) / 2.0
         if c2Len:
@@ -169,7 +174,7 @@ def CalcMLvaluesOfdGeneral(mean, stdDev, readLen, c1Len, obs, c2Len):
             func_of_d = ML_one_reference(d_ML, mean, stdDev, c1Len, readLen)
             #print 'current gap:', d_ML
             #print func_of_d
-        if func_of_d > obs:
+        if func_of_d > naive_gap:
             d_upper = d_ML
         else:
             d_lower = d_ML
