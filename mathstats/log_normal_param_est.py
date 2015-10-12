@@ -19,7 +19,8 @@ from math import exp, pi, sqrt
 from mathstats.normaldist import normal
 
 def calc_log_norm(observations, d, mu, sigma):
-	val = sum([ ( mu - sigma**2 - math.log(o+d) ) / (sigma**2 * (o + d)) for o in observations])
+	val = sum([ (mu - sigma**2 - math.log(o+d)) / (sigma**2 * (o + d)) for o in observations])
+	print 'VAL:', val
 	return val
 
 
@@ -32,13 +33,22 @@ def math_log_if_pos(x):
 		return -inf
 
 def calc_g_prim_d(d, mu, sigma, c_min, c_max, c1Len, c2Len, r, cutoff_approx_level):
-	if d < 0:
-		d= -d*2
+
+	x1 = d+2*r if d+2*r > 0 else 0
 	x1 = d+2*r if d+2*r < cutoff_approx_level else cutoff_approx_level
+
+	x2 = c_min + d + r - 1 if c_min + d + r - 1 > 0 else 0
 	x2 = c_min + d + r - 1 if c_min + d + r - 1 < cutoff_approx_level else cutoff_approx_level
+
+	x3 = c_min + d + r if c_min + d + r > 0 else 0
 	x3 = c_min + d + r if c_min + d + r < cutoff_approx_level else cutoff_approx_level
+
+	x4 = c_max + d + r if c_max + d + r > 0 else 0
 	x4 = c_max + d + r if c_max + d + r < cutoff_approx_level else cutoff_approx_level
+
+	x5 = c_max + d + r + 1 if c_max + d + r + 1 > 0 else 0
 	x5 = c_max + d + r + 1 if c_max + d + r + 1 < cutoff_approx_level else cutoff_approx_level
+
 	x6 = c_min + c_max + d if c_min + c_max + d < cutoff_approx_level else cutoff_approx_level
 
 	term1 = -0.5 * (normal.erf(( math_log_if_pos(x6 + 1) - mu) / (2 ** 0.5 * float(sigma))) + normal.erf((math_log_if_pos(x1 - 1) - mu) / (2 ** 0.5 * float(sigma))))
@@ -65,7 +75,7 @@ def gd(x, d, mu, sigma, c_min, c_max, r):
 		return 0
 
 
-def calc_gd(x x might need to go in here!! x=d+o, d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
+def calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 
 	"""
 		4 different itegration points of the trapetzoid house
@@ -73,15 +83,26 @@ def calc_gd(x x might need to go in here!! x=d+o, d, mu, sigma, c_min, c_max, r,
 		Values can get shaky too far out on the log normal distribution due to float aritmethic
 		cutoff_approx_level is the upper point where estimations are still stable
 	"""
-	if d < 0:
-		d= -d*2
+	print 'CMON', d+2*r, c_min + d + r, c_max + d + r, c_min + c_max + d
+
+	x1 = d+2*r if d+2*r > 0 else 0
 	x1 = d+2*r if d+2*r < cutoff_approx_level else cutoff_approx_level
+
+	x2 = c_min + d + r - 1 if c_min + d + r - 1 > 0 else 0
 	x2 = c_min + d + r - 1 if c_min + d + r - 1 < cutoff_approx_level else cutoff_approx_level
+
+	x3 = c_min + d + r if c_min + d + r > 0 else 0
 	x3 = c_min + d + r if c_min + d + r < cutoff_approx_level else cutoff_approx_level
+
+	x4 = c_max + d + r if c_max + d + r > 0 else 0
 	x4 = c_max + d + r if c_max + d + r < cutoff_approx_level else cutoff_approx_level
+
+	x5 = c_max + d + r + 1 if c_max + d + r + 1 > 0 else 0
 	x5 = c_max + d + r + 1 if c_max + d + r + 1 < cutoff_approx_level else cutoff_approx_level
+
 	x6 = c_min + c_max + d if c_min + c_max + d < cutoff_approx_level else cutoff_approx_level
 
+	print 'JAO', x5, x6 
 	#part_1 =  from x = d+2*r to x = c_min + d + r
 	part_1 = gd(x2, d, mu, sigma, c_min, c_max, r) - gd(x1, d, mu, sigma, c_min, c_max, r)
 	print gd(c_min + d + r - 1, d, mu, sigma, c_min, c_max, r), gd(d + 2*r, d, mu, sigma, c_min, c_max, r)
@@ -135,7 +156,7 @@ def CalcMLvaluesOfdGeneral(mu, sigma, r, c1Len, observations, c2Len, emperical_m
 
 	# set max to mean + 2*sd
 	cutoff_approx_level = math.exp(mu + 0.5*sigma**2) + 5*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) ) 
-	upper_quantile = math.exp(mu + 0.5*sigma**2) + 2*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) )
+	upper_quantile = math.exp(mu + 0.5*sigma**2) + 3*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) )
 	max_gap = upper_quantile if upper_quantile + max_obs <  cutoff_approx_level else cutoff_approx_level - max_obs  #emperical_max
 	d_lower = min_gap
 	d_upper = max_gap
@@ -166,7 +187,7 @@ def CalcMLvaluesOfdGeneral(mu, sigma, r, c1Len, observations, c2Len, emperical_m
 	g_d_list = []
 	g_prim_d_list = []
 
-	for d_ in range(d_lower, int(d_upper), 100):
+	for d_ in range(d_lower, 10000, 100):
 		#for frac in range(10):
 		d = d_ # + frac/10.0
 		#print "GAP", d
@@ -191,7 +212,7 @@ def CalcMLvaluesOfdGeneral(mu, sigma, r, c1Len, observations, c2Len, emperical_m
 	import matplotlib.pyplot as plt
 	plt.plot(x,y,'-')
 	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,-0.01,0.001))
+	# plt.axis((x1,x2,-0.01,0.001))
 	plt.show()
 
 	plt.plot(x,y_1,'-')
@@ -202,12 +223,12 @@ def CalcMLvaluesOfdGeneral(mu, sigma, r, c1Len, observations, c2Len, emperical_m
 
 	plt.plot(x,g_prim_d_list,'-')
 	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,-0.01,0.001))
+	# plt.axis((x1,x2,-0.01,0.001))
 	plt.show()
 
 	plt.plot(x,g_d_list,'-r')
 	x1,x2,y1,y2 = plt.axis()
-	plt.axis((x1,x2,-0.01,0.001))
+	# plt.axis((x1,x2,-0.01,0.001))
 	plt.show()
 
 	print 'MLGAP', d_ML
