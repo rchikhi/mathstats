@@ -292,7 +292,7 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 			x = x_prime
 
 
-	d_ML = x_prime
+	d_ML = x_prime if x_prime < d_upper else d_upper
 	#print d_ML
 	# a = raw_input("press enter")
 	return d_ML
