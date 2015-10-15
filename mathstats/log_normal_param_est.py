@@ -27,7 +27,7 @@ def math_log_if_pos(x):
 	if x > 0:
 		return math.log(x)
 	else:
-		print 'here'
+		#print 'here'
 		inf = float("inf")
 		return -inf
 
@@ -202,7 +202,7 @@ def GapEstimator(mu, sigma, r, observations, c1_len, c2_len=None, method="NR", s
 	max_gap = int(upper_quantile) if upper_quantile + max_obs <  cutoff_approx_level else int(cutoff_approx_level - max_obs)  #emperical_max
 	d_lower = min_gap
 	d_upper = max_gap
-	print d_upper, cutoff_approx_level
+	#print d_upper, cutoff_approx_level
 
     if method == "linear":
     	d_ML = get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, stepsize, cutoff_approx_level)
@@ -227,60 +227,65 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 	    		by calculating the function values in two close points (1bp) and using:
 	    		f'(x) = (f(x_2) - f(x_1)) / (x_2 - x_1) where x_2 > x_1
 
-	    Step 2: The derivatives help us describe the fit of a line in point x. We have
+	    Step 2: Find the intersection with y, i.e. the intercept, of the two functions.
+
+	    Step 3: The derivatives help us describe the fit of a line in point x. We have
 	    		y = kx+m, where k = f'(x) and m=f(x).
 	    		We use the two lines to find the intersection point x' between them. The intersection
 	    		point x' is used to define the new x.
 
-	    Step 3: Restart algorithm with x'. 
+	    Step 4: Restart algorithm with x'. 
 	"""
 	n = len(observations)
 
 	x = d_lower
 	x_prime = d_upper
-	print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
+	#print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
 
 	import matplotlib.pyplot as plt
-
+	dx = 1
 	while True:
 		# Step 1
 		o_x1 = calc_log_norm(observations, x, mu, sigma)
-		o_x2 = calc_log_norm(observations, x+1, mu, sigma)
+		o_x2 = calc_log_norm(observations, x+dx, mu, sigma)
 
 		g_d_denominator_x1 = calc_gd(x, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		g_prime_d_nominator_x1 = calc_g_prim_d(x, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		g_d_ratio_x1 = n*g_prime_d_nominator_x1/g_d_denominator_x1
 
-		g_d_denominator_x2 = calc_gd(x+1, mu, sigma, c_min, c_max, r, cutoff_approx_level)
-		g_prime_d_nominator_x2 = calc_g_prim_d(x+1, mu, sigma, c_min, c_max, r, cutoff_approx_level)
+		g_d_denominator_x2 = calc_gd(x+dx, mu, sigma, c_min, c_max, r, cutoff_approx_level)
+		g_prime_d_nominator_x2 = calc_g_prim_d(x+dx, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		g_d_ratio_x2 = n*g_prime_d_nominator_x2 /g_d_denominator_x2
 
-		o_prime = (o_x2 - o_x1) / (x+1 - x)
-		g_prime = (g_d_ratio_x2 - g_d_ratio_x1) / (x+1 - x)
+		o_prime = (o_x2 - o_x1) / (x+dx - x)
+		g_prime = (g_d_ratio_x2 - g_d_ratio_x1) / (x+dx - x)
 		
-		# Step 2
-		x_prime = ( (o_x1 +o_x2)/2.0 - (g_d_ratio_x1 + g_d_ratio_x2)/2.0 ) / (g_prime - o_prime)
-		print "x:", x, "x_prime:", x_prime
-		print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
+		# Step 2: y = kx + m ==> m = y - kx
+		intercept_o = (o_x1 + o_x2)/2.0 - o_prime*(x + (x + 1))/2.0
+		intercept_g = (g_d_ratio_x1 + g_d_ratio_x2)/2.0 - g_prime*(x + (x + 1))/2.0
+
+		#Step 3:
+		x_prime = ( intercept_o - intercept_g) / (g_prime - o_prime)
+		#print "x:", x, "x_prime:", x_prime, x_prime - x
+		# print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
 
 		###########
-		gap_size, f_1, f_2 = get_fcns(mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, 100, cutoff_approx_level)
-		fig, ax = plt.subplots()
-		plt.plot(gap_size, f_1,'-')
-		plt.plot(gap_size, f_2,'-')
-		y_0 = o_prime*-200 + (o_x1 +o_x2)/2.0
-		y_1 = o_prime*1000 + (o_x1 +o_x2)/2.0
-		z_0 = g_prime*-200 + (g_d_ratio_x1 + g_d_ratio_x2)/2.0
-		z_1 = g_prime*1000 + (g_d_ratio_x1 + g_d_ratio_x2)/2.0
-		ax.scatter([-200, 1000], [y_0, y_1], marker='^', s=150, c='r')
-		ax.plot([-200, 1000], [y_0, y_1], c='r') 
-		ax.scatter([-200, 1000], [z_0, z_1], marker='^', s=150, c='b')
-		ax.plot([-200, 1000], [z_0, z_1], c='b') 
-		plt.show()
+		# gap_size, f_1, f_2 = get_fcns(mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, 100, cutoff_approx_level)
+		# fig, ax = plt.subplots()
+		# plt.plot(gap_size, f_1,'-')
+		# plt.plot(gap_size, f_2,'-')
+		# y_0 = o_prime*-200 + intercept_o
+		# y_1 = o_prime*5000 + intercept_o
+		# z_0 = g_prime*-200 + intercept_g
+		# z_1 = g_prime*5000 + intercept_g
+		# ax.scatter([-200, 5000], [y_0, y_1], marker='^', s=150, c='r')
+		# ax.plot([-200, 5000], [y_0, y_1], c='r') 
+		# ax.scatter([-200, 5000], [z_0, z_1], marker='^', s=150, c='b')
+		# ax.plot([-200, 5000], [z_0, z_1], c='b') 
+		# plt.show()
 		#################
 
 		# Step 3
-		print x_prime, x, x_prime - x
 		if x_prime - x < 0.5:
 			break
 		else:
@@ -288,7 +293,7 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 
 
 	d_ML = x_prime
-	print d_ML
+	#print d_ML
 	# a = raw_input("press enter")
 	return d_ML
 
@@ -333,29 +338,29 @@ def get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_
 		#print 'gap:',d, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',other_term
 
 
-	import matplotlib.pyplot as plt
-	# plt.plot(x,y,'-')
+	# import matplotlib.pyplot as plt
+	# # plt.plot(x,y,'-')
+	# # x1,x2,y1,y2 = plt.axis()
+	# # # plt.axis((x1,x2,-0.01,0.001))
+	# # plt.show()
+
+	# plt.plot(x,y_1,'-')
+	# plt.plot(x,y_2,'-r')
 	# x1,x2,y1,y2 = plt.axis()
-	# # plt.axis((x1,x2,-0.01,0.001))
+	# #plt.axis((x1,x2,-0.01,0.001))
 	# plt.show()
 
-	plt.plot(x,y_1,'-')
-	plt.plot(x,y_2,'-r')
-	x1,x2,y1,y2 = plt.axis()
-	#plt.axis((x1,x2,-0.01,0.001))
-	plt.show()
+	# # plt.plot(x,g_prim_d_list,'-')
+	# # x1,x2,y1,y2 = plt.axis()
+	# # # plt.axis((x1,x2,-0.01,0.001))
+	# # plt.show()
 
-	# plt.plot(x,g_prim_d_list,'-')
-	# x1,x2,y1,y2 = plt.axis()
-	# # plt.axis((x1,x2,-0.01,0.001))
-	# plt.show()
+	# # plt.plot(x,g_d_list,'-r')
+	# # x1,x2,y1,y2 = plt.axis()
+	# # # plt.axis((x1,x2,-0.01,0.001))
+	# # plt.show()
 
-	# plt.plot(x,g_d_list,'-r')
-	# x1,x2,y1,y2 = plt.axis()
-	# # plt.axis((x1,x2,-0.01,0.001))
-	# plt.show()
-
-	print 'MLGAP', d_ML
+	# print 'MLGAP', d_ML
 	return d_ML
 
 
