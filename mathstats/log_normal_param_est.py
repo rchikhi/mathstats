@@ -75,13 +75,13 @@ def calc_g_prim_d(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 	x6 = c_min + c_max + d if c_min + c_max + d < cutoff_approx_level else cutoff_approx_level
 
 	part_1 = g_prim_d(x2, d, mu, sigma, c_min, c_max, r) - g_prim_d(x1, d, mu, sigma, c_min, c_max, r)
-
+	# print "g_prim_d, part_1:", part_1
 	#part_2 = from x = c_min + d + r to x = c_max + d + r
 	part_2 =  g_prim_d(x4, d, mu, sigma, c_min, c_max, r) - g_prim_d(x3, d, mu, sigma, c_min, c_max, r)
-
+	# print "g_prim_d, part_2:", part_2
 	#part_3 = from x = c_max + d + r + 1 to c_min + c_max + d 
 	part_3 = g_prim_d(x6, d, mu, sigma, c_min, c_max, r) - g_prim_d(x5, d, mu, sigma, c_min, c_max, r)
-
+	# print "g_prim_d, part_3:", part_3
 	return part_1 + part_2 + part_3
 
 def g_prim_d(x, d, mu, sigma, c_min, c_max, r):
@@ -109,7 +109,7 @@ def gd(x, d, mu, sigma, c_min, c_max, r):
 	# x is large, on the down slope of the triangle house
 	elif c_max+d+r-x < 0 and c_min + c_max + d - x > -1:
 		#print 'loolz', normal.erf((mu-math_log_if_pos(x))+sigma**2/(sqrt(2) * sigma)), x #normal.erf((mu-math_log_if_pos(x))/(math.sqrt(2.0)*sigma))
-		return 1/2.0 * (math.exp(sigma**2/2.0 + mu) * normal.erf((mu-math_log_if_pos(x))+sigma**2/(sqrt(2) * sigma)) - (c_min+c_max+d+1)*normal.erf((mu-math_log_if_pos(x))/(math.sqrt(2.0)*sigma)))
+		return 1/2.0 * (math.exp(sigma**2/2.0 + mu) * normal.erf((mu-math_log_if_pos(x)+sigma**2)/(sqrt(2) * sigma)) - (c_min+c_max+d+1)*normal.erf((mu-math_log_if_pos(x))/(math.sqrt(2.0)*sigma)))
 
 	# x is small, beginning of triangle house
 	elif d+2*r-x < 1 and c_min+d+r-x > 0:
@@ -169,9 +169,10 @@ def calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 
 	# print gd(c_min + c_max + d, d, mu, sigma, c_min, c_max, r), gd(c_max + d + r + 1, d, mu, sigma, c_min, c_max, r)
 	# print 'from to', c_min + c_max + d, c_max + d + r + 1
-	# print part_1
-	# print part_2
-	# print part_3
+	# print "g_d, part_1:", part_1
+	# print "g_d, part_2:", part_2
+	# print "g_d, part_3:", part_3
+	# print "part3:", gd(x6, d, mu, sigma, c_min, c_max, r), gd(x5, d, mu, sigma, c_min, c_max, r), x6,x5
 	return part_1 + part_2 + part_3
 
 def GapEstimator(mu, sigma, r, observations, c1_len, c2_len=None, method="NR", stepsize=None):
@@ -202,7 +203,7 @@ def GapEstimator(mu, sigma, r, observations, c1_len, c2_len=None, method="NR", s
 	max_gap = int(upper_quantile) if upper_quantile + max_obs <  cutoff_approx_level else int(cutoff_approx_level - max_obs)  #emperical_max
 	d_lower = min_gap
 	d_upper = max_gap
-	#print d_upper, cutoff_approx_level
+	# print 'UPPER:', d_upper, cutoff_approx_level, max_gap
 
     if method == "linear":
     	d_ML = get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, stepsize, cutoff_approx_level)
@@ -318,7 +319,7 @@ def get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_
 	fcns_has_crossed = False
 
 	for d in range(int(d_lower), int(d_upper), int(stepsize)):
-		#print "GAP", d
+		print "GAP", d
 		g_d = calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		g_d_list.append(g_d)
 		g_prime_d = calc_g_prim_d(d, mu, sigma, c_min, c_max, r, cutoff_approx_level)
@@ -335,6 +336,7 @@ def get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_
 		y.append(g_d_ratio - other_term)
 		y_1.append(g_d_ratio)
 		y_2.append(other_term)
+		print
 		#print 'gap:',d, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',other_term
 
 
