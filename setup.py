@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='mathstats',
-    version='0.1.7',
+    version='0.2.0',
     packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",

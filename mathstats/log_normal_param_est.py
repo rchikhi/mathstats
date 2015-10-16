@@ -243,7 +243,7 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 	x_prime = d_upper
 	#print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
 
-	import matplotlib.pyplot as plt
+	#import matplotlib.pyplot as plt
 	dx = 1
 	while True:
 		# Step 1
