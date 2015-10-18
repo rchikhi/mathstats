@@ -195,7 +195,7 @@ def GapEstimator(mu, sigma, r, observations, c1_len, c2_len=None, method="NR", s
 	max_obs = max(observations)
 	c_min = min(c1_len, c2_len)
 	c_max = max(c1_len, c2_len)
-	min_gap = -int(min_obs) + int(2*r)
+	min_gap = -int(min_obs) + 1 #+ int(2*r)
 
 	# set max to mu + 2*sd
 	cutoff_approx_level = math.exp(mu + 0.5*sigma**2) + 5000*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) ) 
@@ -242,9 +242,11 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 	x = d_lower
 	x_prime = d_upper
 	#print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
-
-	#import matplotlib.pyplot as plt
+	print 'lower,upper,nr obs:', d_lower, d_upper, n
+	print 'c_min and c_max', c_min, c_max
+	import matplotlib.pyplot as plt
 	dx = 1
+
 	while True:
 		# Step 1
 		o_x1 = calc_log_norm(observations, x, mu, sigma)
@@ -267,10 +269,11 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 
 		#Step 3:
 		x_prime = ( intercept_o - intercept_g) / (g_prime - o_prime)
-		#print "x:", x, "x_prime:", x_prime, x_prime - x
+		print "x:", x, "x_prime:", x_prime, x_prime - x, "derivative","oprime:", o_prime, "g_prime", g_prime 
 		# print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
 
 		###########
+		# if observations == [6539, 5449, 4185, 2700, 1294, 2449, 1010, 765, 1362, 2700, 2449, 2946, 5103]: 
 		# gap_size, f_1, f_2 = get_fcns(mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, 100, cutoff_approx_level)
 		# fig, ax = plt.subplots()
 		# plt.plot(gap_size, f_1,'-')
@@ -283,11 +286,28 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 		# ax.plot([-200, 5000], [y_0, y_1], c='r') 
 		# ax.scatter([-200, 5000], [z_0, z_1], marker='^', s=150, c='b')
 		# ax.plot([-200, 5000], [z_0, z_1], c='b') 
+		# plt.ylim((-5.3, -0.1))
 		# plt.show()
 		#################
 
 		# Step 3
-		if x_prime - x < 0.5:
+		if x_prime < x:
+			# catching bug here: should never be negative slope,
+			# this can occur from floating point approximations in any of the 
+			# used expressiond when things gets very small or large.
+			x_prime = x
+			# print 'x_prime moved back'
+			# raw_input("press enter")
+			break
+		elif x_prime  > d_upper:
+			# Another heuristic stopping criterion:
+			# Derivatives are too sililar so the intersection
+			# has high uncertainty
+			x_prime = d_upper
+			# print 'x_prime sprinted'
+			# raw_input("press enter")
+			break
+		elif math.fabs(x_prime - x) < 0.5:
 			break
 		else:
 			x = x_prime
