@@ -195,12 +195,12 @@ def GapEstimator(mu, sigma, r, observations, c1_len, c2_len=None, method="NR", s
 	max_obs = max(observations)
 	c_min = min(c1_len, c2_len)
 	c_max = max(c1_len, c2_len)
-	min_gap = -int(min_obs) + 1 #+ int(2*r)
+	min_gap = max(-int(min_obs) + 1, -c_min + int(2*r))
 
 	# set max to mu + 2*sd
 	cutoff_approx_level = math.exp(mu + 0.5*sigma**2) + 5000*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) ) 
 	upper_quantile = math.exp(mu + 0.5*sigma**2) + 3*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) )
-	max_gap = int(upper_quantile) if upper_quantile + max_obs <  cutoff_approx_level else int(cutoff_approx_level - max_obs)  #emperical_max
+	max_gap = int(upper_quantile) if upper_quantile <  cutoff_approx_level else int(cutoff_approx_level - max_obs)  #emperical_max
 	d_lower = min_gap
 	d_upper = max_gap
 	# print 'UPPER:', d_upper, cutoff_approx_level, max_gap
@@ -244,6 +244,7 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 	#print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
 	print 'lower,upper,nr obs:', d_lower, d_upper, n
 	print 'c_min and c_max', c_min, c_max
+	print 'observations:', observations
 	import matplotlib.pyplot as plt
 	dx = 1
 
