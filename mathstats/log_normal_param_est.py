@@ -242,9 +242,9 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 	x = d_lower
 	x_prime = d_upper
 	#print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
-	print 'lower,upper,nr obs:', d_lower, d_upper, n
-	print 'c_min and c_max', c_min, c_max
-	print 'observations:', observations
+	#print 'lower,upper,nr obs:', d_lower, d_upper, n
+	#print 'c_min and c_max', c_min, c_max
+	#print 'observations:', observations
 	import matplotlib.pyplot as plt
 	dx = 1
 
@@ -270,7 +270,7 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 
 		#Step 3:
 		x_prime = ( intercept_o - intercept_g) / (g_prime - o_prime)
-		print "x:", x, "x_prime:", x_prime, x_prime - x, "derivative","oprime:", o_prime, "g_prime", g_prime 
+		#print "x:", x, "x_prime:", x_prime, x_prime - x, "derivative","oprime:", o_prime, "g_prime", g_prime 
 		# print 'Current gap:', x #, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',observation_term
 
 		###########
@@ -340,7 +340,7 @@ def get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_
 	fcns_has_crossed = False
 
 	for d in range(int(d_lower), int(d_upper), int(stepsize)):
-		print "GAP", d
+		#print "GAP", d
 		g_d = calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		g_d_list.append(g_d)
 		g_prime_d = calc_g_prim_d(d, mu, sigma, c_min, c_max, r, cutoff_approx_level)
@@ -357,7 +357,7 @@ def get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_
 		y.append(g_d_ratio - other_term)
 		y_1.append(g_d_ratio)
 		y_2.append(other_term)
-		print
+		#print
 		#print 'gap:',d, 'g(d)*n', g_d_ratio, "g_d", g_d, "g_prime", g_prime_d, 'other:',other_term
 
 
