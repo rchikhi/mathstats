@@ -6,7 +6,7 @@
     Parameters of a truncated lognormal distribution are:
     * mean
     * variance
-    * minimum value (lower bound 'a') 
+    * minimum value (lower bound 'a')
     * maximum value (upper bound 'b')
     
     Application:
@@ -128,7 +128,7 @@ def calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 		Values can get shaky too far out on the log normal distribution due to float aritmethic
 		cutoff_approx_level is the upper point where estimations are still stable
 	"""
-	#print 'CMON', d+2*r, c_min + d + r, c_max + d + r, c_min + c_max + d
+	# print 'CMON', d+2*r, c_min + d + r, c_max + d + r, c_min + c_max + d
 
 	x1 = d+2*r if d+2*r > 0 else 0
 	x1 = d+2*r if d+2*r < cutoff_approx_level else cutoff_approx_level
@@ -146,7 +146,7 @@ def calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 	x5 = c_max + d + r + 1 if c_max + d + r + 1 < cutoff_approx_level else cutoff_approx_level
 
 	x6 = c_min + c_max + d if c_min + c_max + d < cutoff_approx_level else cutoff_approx_level
-
+	# print x5, x6
 	# print 'JAO', x1, x2 
 	# print 'x1:', -1/2.0 * (math.exp(sigma**2/2.0 + mu) * normal.erf(((mu-math_log_if_pos(x1))+sigma**2)/(math.sqrt(2.0)*sigma)) - (d+2*r-1)*normal.erf((mu-math_log_if_pos(x1)) / (math.sqrt(2.0)*sigma)))
 	# print 'x2:', -1/2.0 * (math.exp(sigma**2/2.0 + mu) * normal.erf(((mu-math_log_if_pos(x2))+sigma**2)/(math.sqrt(2.0)*sigma)) - (d+2*r-1)*normal.erf((mu-math_log_if_pos(x2)) / (math.sqrt(2.0)*sigma)))
@@ -166,7 +166,7 @@ def calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 
 	#part_3 = from x = c_max + d + r + 1 to c_min + c_max + d 
 	part_3 = gd(x6, d, mu, sigma, c_min, c_max, r) - gd(x5, d, mu, sigma, c_min, c_max, r)
-
+	# print gd(x6, d, mu, sigma, c_min, c_max, r), gd(x5, d, mu, sigma, c_min, c_max, r)
 	# print gd(c_min + c_max + d, d, mu, sigma, c_min, c_max, r), gd(c_max + d + r + 1, d, mu, sigma, c_min, c_max, r)
 	# print 'from to', c_min + c_max + d, c_max + d + r + 1
 	# print "g_d, part_1:", part_1
@@ -182,33 +182,56 @@ def GapEstimator(mu, sigma, r, observations, c1_len, c2_len=None, method="NR", s
     r 		- read length
     Method  - Either "NR" for Newton-Rhapson or linear for going through every gap size (only for testing purposes)
     '''
-
+    # print "LOOOOOOOOL"
     if c2_len is None:
         c2_len = c1_len
 
     if not stepsize:
-    	stepsize = math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2))/float(10)
+    	stepsize = min(math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2))/float(10), 300)
+    	# print stepsize
+    	# sys.exit()
 
 	mu, sigma, r, c1_len, c2_len = float(mu), float(sigma), float(r), float(c1_len), float(c2_len)
 	# Some pruning of extreme observations would be good to have here
-	min_obs = min(observations)
-	max_obs = max(observations)
+	observations.sort()
+	# print observations
+	min_obs = observations[0]
+	# print "MIN obs:", min_obs
+
+	max_obs_mean = sum(observations[-3:])/3.0
+	# print max_obs_mean
 	c_min = min(c1_len, c2_len)
 	c_max = max(c1_len, c2_len)
-	min_gap = max(-int(min_obs) + 1, -c_min + int(2*r))
-
+	mode = math.exp(mu - sigma**2)
+	min_gap = max(-int(min_obs/2) + 1, -c_min + int(2*r), mode - observations[-1])
+	# print "min gap", min_gap
+	# sys.exit()
 	# set max to mu + 2*sd
 	cutoff_approx_level = math.exp(mu + 0.5*sigma**2) + 5000*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) ) 
-	upper_quantile = math.exp(mu + 0.5*sigma**2) + 3*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) )
-	max_gap = int(upper_quantile) if upper_quantile <  cutoff_approx_level else int(cutoff_approx_level - max_obs)  #emperical_max
+	# print "cutoff_approx_level", cutoff_approx_level
+	upper_quantile = math.exp(mu + 0.5*sigma**2) + 5*math.sqrt( (math.exp(sigma**2) - 1) * math.exp(2*mu + sigma**2) )
+	# print upper_quantile
+	max_gap = int(upper_quantile - max_obs_mean) if int(upper_quantile - max_obs_mean) > 0 else int(upper_quantile - max_obs_mean)/2
+	# max_gap = int(upper_quantile) if upper_quantile < cutoff_approx_level else int(cutoff_approx_level - max_obs)  #emperical_max
 	d_lower = min_gap
 	d_upper = max_gap
+	# print "max gap", max_gap
+	# print min_obs, max_obs_mean
+	if min_gap > max_gap:
+		# print "enter here"
+		return min_gap
+	# sys.exit()
 	# print 'UPPER:', d_upper, cutoff_approx_level, max_gap
-
+	# sys.exit()
     if method == "linear":
     	d_ML = get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, stepsize, cutoff_approx_level)
     elif method == "NR":
     	d_ML = get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, cutoff_approx_level)
+    	# failed to find good root! do slower but more accurate linear search for this gap
+    	if d_ML <= d_lower + 1:
+			# print "HEEEREE"
+			d_ML = get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, stepsize, cutoff_approx_level)
+
     else:
     	print "Wrong method specified, specify either 'NR' (preffered) or 'linear'. "
     	return None
@@ -255,11 +278,19 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 
 		g_d_denominator_x1 = calc_gd(x, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		g_prime_d_nominator_x1 = calc_g_prim_d(x, mu, sigma, c_min, c_max, r, cutoff_approx_level)
+		# try:
 		g_d_ratio_x1 = n*g_prime_d_nominator_x1/g_d_denominator_x1
+		# except ZeroDivisionError:
+		# 	x += 10
 
 		g_d_denominator_x2 = calc_gd(x+dx, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		g_prime_d_nominator_x2 = calc_g_prim_d(x+dx, mu, sigma, c_min, c_max, r, cutoff_approx_level)
+
+		# try:
 		g_d_ratio_x2 = n*g_prime_d_nominator_x2 /g_d_denominator_x2
+		# except ZeroDivisionError:
+		# 	# too small starting value
+		# 	x += 10
 
 		o_prime = (o_x2 - o_x1) / (x+dx - x)
 		g_prime = (g_d_ratio_x2 - g_d_ratio_x1) / (x+dx - x)
@@ -279,15 +310,15 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 		# fig, ax = plt.subplots()
 		# plt.plot(gap_size, f_1,'-')
 		# plt.plot(gap_size, f_2,'-')
-		# y_0 = o_prime*-200 + intercept_o
+		# y_0 = o_prime*-4000 + intercept_o
 		# y_1 = o_prime*5000 + intercept_o
-		# z_0 = g_prime*-200 + intercept_g
+		# z_0 = g_prime*-4000 + intercept_g
 		# z_1 = g_prime*5000 + intercept_g
-		# ax.scatter([-200, 5000], [y_0, y_1], marker='^', s=150, c='r')
-		# ax.plot([-200, 5000], [y_0, y_1], c='r') 
-		# ax.scatter([-200, 5000], [z_0, z_1], marker='^', s=150, c='b')
-		# ax.plot([-200, 5000], [z_0, z_1], c='b') 
-		# plt.ylim((-5.3, -0.1))
+		# ax.scatter([-4000, 5000], [y_0, y_1], marker='^', s=150, c='r')
+		# ax.plot([-4000, 5000], [y_0, y_1], c='r') 
+		# ax.scatter([-4000, 5000], [z_0, z_1], marker='^', s=150, c='b')
+		# ax.plot([-4000, 5000], [z_0, z_1], c='b') 
+		# plt.ylim((-.05, .05))
 		# plt.show()
 		#################
 
@@ -313,7 +344,8 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 		else:
 			x = x_prime
 
-
+	# print "FINAL value:", x_prime
+	# sys.exit()
 	d_ML = x_prime if x_prime < d_upper else d_upper
 	#print d_ML
 	# a = raw_input("press enter")
@@ -335,12 +367,16 @@ def get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_
 	y_2 = []
 	g_d_list = []
 	g_prim_d_list = []
+	d_ML = d_lower
 	# this is where the two functions cross and we have our (not nexessarily unique) ML estimate
 	# The fist cross is the true ML estimate based on emperical testing
 	fcns_has_crossed = False
-
+	# print int(d_lower), int(d_upper), int(stepsize)
+	closest_dist_between_fcns = 2**32
 	for d in range(int(d_lower), int(d_upper), int(stepsize)):
 		#print "GAP", d
+		if fcns_has_crossed:
+			break
 		g_d = calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		g_d_list.append(g_d)
 		g_prime_d = calc_g_prim_d(d, mu, sigma, c_min, c_max, r, cutoff_approx_level)
@@ -352,6 +388,10 @@ def get_d_ML_linear_search(mu, sigma, r, c_min, observations, c_max, d_lower, d_
 			# the ML estimate occurs at the first crossing
 			d_ML = (d + (d-stepsize))/2.0
 			fcns_has_crossed = True
+		else:
+			if other_term > g_d_ratio and other_term - g_d_ratio < closest_dist_between_fcns:
+				closest_dist_between_fcns = other_term - g_d_ratio
+				d_ML = (d + (d-stepsize))/2.0
 
 		x.append(d)
 		y.append(g_d_ratio - other_term)
