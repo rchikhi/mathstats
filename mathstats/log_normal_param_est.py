@@ -59,20 +59,25 @@ def calc_g_prim_d(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 
 	x1 = d+2*r if d+2*r > 0 else 0
 	x1 = d+2*r if d+2*r < cutoff_approx_level else cutoff_approx_level
-
+	# print("x1", x1)
 	x2 = c_min + d + r - 1 if c_min + d + r - 1 > 0 else 0
 	x2 = c_min + d + r - 1 if c_min + d + r - 1 < cutoff_approx_level else cutoff_approx_level
+	# print("x2",x2)
 
 	x3 = c_min + d + r if c_min + d + r > 0 else 0
 	x3 = c_min + d + r if c_min + d + r < cutoff_approx_level else cutoff_approx_level
+	# print("x3",x3)
 
 	x4 = c_max + d + r if c_max + d + r > 0 else 0
 	x4 = c_max + d + r if c_max + d + r < cutoff_approx_level else cutoff_approx_level
+	# print("x4", x4)
 
 	x5 = c_max + d + r + 1 if c_max + d + r + 1 > 0 else 0
 	x5 = c_max + d + r + 1 if c_max + d + r + 1 < cutoff_approx_level else cutoff_approx_level
+	# print("x5",x5)
 
 	x6 = c_min + c_max + d if c_min + c_max + d < cutoff_approx_level else cutoff_approx_level
+	# print("x6",x6)
 
 	part_1 = g_prim_d(x2, d, mu, sigma, c_min, c_max, r) - g_prim_d(x1, d, mu, sigma, c_min, c_max, r)
 	# print "g_prim_d, part_1:", part_1
@@ -82,29 +87,36 @@ def calc_g_prim_d(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 	#part_3 = from x = c_max + d + r + 1 to c_min + c_max + d 
 	part_3 = g_prim_d(x6, d, mu, sigma, c_min, c_max, r) - g_prim_d(x5, d, mu, sigma, c_min, c_max, r)
 	# print "g_prim_d, part_3:", part_3
+	# print("RETURNING:", part_1 + part_2 + part_3 )
 	return part_1 + part_2 + part_3
 
 def g_prim_d(x, d, mu, sigma, c_min, c_max, r):
 	# in the middle part (roof of triangle house, between c_min and c_max)
 	if c_max+d+r-x >= 0 and c_min+d+r-x <= 0:
+		# print("lol")
 		return 0
 
 	# x is large, on the down slope of the triangle house
 	elif c_max+d+r-x < 0 and c_min + c_max + d - x > -1:
 		#print 'loolz', normal.erf((mu-math_log_if_pos(x))+sigma**2/(sqrt(2) * sigma)), x #normal.erf((mu-math_log_if_pos(x))/(math.sqrt(2.0)*sigma))
+		# print("ok")
 		return 0.5 * normal.erf((math_log_if_pos(x) - mu)/(sqrt(2) * sigma))
 
 	# x is small, beginning of triangle house
 	elif d+2*r-x < 1 and c_min+d+r-x > 0:
 		#print 'laal', normal.erf(((mu-math_log_if_pos(x))+sigma**2)/(math.sqrt(2.0)*sigma))
 		return -0.5 * normal.erf((math_log_if_pos(x) - mu)/(sqrt(2) * sigma))
+		# print("ok2")
 	else:
+		# print("lol2")
 		return 0
 
 def gd(x, d, mu, sigma, c_min, c_max, r):
 	# in the middle part (roof of triangle house, between c_min and c_max)
 	if c_max+d+r-x >= 0 and c_min+d+r-x <= 0:
-		return (c_min-r+1)/2.0 * normal.erf((math_log_if_pos(x)-mu)/(math.sqrt(2.0)*sigma))
+		multiplier_height = max((c_min-r+1)/2.0, 1)
+		return multiplier_height * normal.erf((math_log_if_pos(x)-mu)/(math.sqrt(2.0)*sigma))
+		# return (c_min-r+1)/2.0 * normal.erf((math_log_if_pos(x)-mu)/(math.sqrt(2.0)*sigma))
 
 	# x is large, on the down slope of the triangle house
 	elif c_max+d+r-x < 0 and c_min + c_max + d - x > -1:
@@ -117,7 +129,8 @@ def gd(x, d, mu, sigma, c_min, c_max, r):
 		return -1/2.0 * (math.exp(sigma**2/2.0 + mu) * normal.erf(((mu-math_log_if_pos(x))+sigma**2)/(math.sqrt(2.0)*sigma)) - (d+2*r-1)*normal.erf((mu-math_log_if_pos(x)) / (math.sqrt(2.0)*sigma)))
 
 	else:
-		return 0
+		# print("OMG")
+		return 0.0
 
 
 def calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
@@ -146,6 +159,13 @@ def calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 	x5 = c_max + d + r + 1 if c_max + d + r + 1 < cutoff_approx_level else cutoff_approx_level
 
 	x6 = c_min + c_max + d if c_min + c_max + d < cutoff_approx_level else cutoff_approx_level
+	# print("x1", x1)
+	# print("x2", x2)
+	# print("x3", x3)
+	# print("x4", x4)
+	# print("x5", x5)
+	# print("x6", x6)
+
 	# print x5, x6
 	# print 'JAO', x1, x2 
 	# print 'x1:', -1/2.0 * (math.exp(sigma**2/2.0 + mu) * normal.erf(((mu-math_log_if_pos(x1))+sigma**2)/(math.sqrt(2.0)*sigma)) - (d+2*r-1)*normal.erf((mu-math_log_if_pos(x1)) / (math.sqrt(2.0)*sigma)))
@@ -166,12 +186,14 @@ def calc_gd(d, mu, sigma, c_min, c_max, r, cutoff_approx_level):
 
 	#part_3 = from x = c_max + d + r + 1 to c_min + c_max + d 
 	part_3 = gd(x6, d, mu, sigma, c_min, c_max, r) - gd(x5, d, mu, sigma, c_min, c_max, r)
+
 	# print gd(x6, d, mu, sigma, c_min, c_max, r), gd(x5, d, mu, sigma, c_min, c_max, r)
 	# print gd(c_min + c_max + d, d, mu, sigma, c_min, c_max, r), gd(c_max + d + r + 1, d, mu, sigma, c_min, c_max, r)
 	# print 'from to', c_min + c_max + d, c_max + d + r + 1
-	# print "g_d, part_1:", part_1
-	# print "g_d, part_2:", part_2
-	# print "g_d, part_3:", part_3
+	# print "g_d, part_1:", part_1, gd(x2, d, mu, sigma, c_min, c_max, r), gd(x1, d, mu, sigma, c_min, c_max, r)
+	# print "g_d, part_2:", part_2, gd(x4, d, mu, sigma, c_min, c_max, r), gd(x3, d, mu, sigma, c_min, c_max, r)
+	# print "g_d, part_3:", part_3, gd(x6, d, mu, sigma, c_min, c_max, r), gd(x5, d, mu, sigma, c_min, c_max, r)
+	# print "g_d, all parts sum:", part_1 + part_2 + part_3
 	# print "part3:", gd(x6, d, mu, sigma, c_min, c_max, r), gd(x5, d, mu, sigma, c_min, c_max, r), x6,x5
 	return part_1 + part_2 + part_3
 
@@ -277,6 +299,7 @@ def get_d_ML_Newton_Raphson(mu, sigma, r, c_min, observations, c_max, d_lower, d
 		o_x2 = calc_log_norm(observations, x+dx, mu, sigma)
 
 		g_d_denominator_x1 = calc_gd(x, mu, sigma, c_min, c_max, r, cutoff_approx_level)
+		# print(x, mu, sigma, r, c_min, observations, c_max, d_lower, d_upper, cutoff_approx_level)
 		g_prime_d_nominator_x1 = calc_g_prim_d(x, mu, sigma, c_min, c_max, r, cutoff_approx_level)
 		# try:
 		g_d_ratio_x1 = n*g_prime_d_nominator_x1/g_d_denominator_x1
