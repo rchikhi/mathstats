@@ -22,7 +22,7 @@ setup(
     author_email='kristoffer.sahlin@scilifelab.se',
     url='https://github.com/ksahlin/mathstats',
     license='GPLv3',
-    long_description=open(os.path.join(os.getcwdu(), 'README.md')).read(),
+    long_description=open(os.path.join(os.getcwd(), 'README.md')).read(),
     install_requires=['scipy>=0.9']
     #                  'networkx>=1.4'],
     #platforms=['Unix', 'Linux', 'Mac OS']
